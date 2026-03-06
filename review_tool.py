@@ -1,5 +1,5 @@
 """
-诗花雅送 · 数据审核工具 v2  app.py
+诗花雅送 · 数据审核工具 v3
 Google Drive 协作版：每人负责不同月份，结果保存为独立文件，最后合并。
 
 运行方式：
@@ -214,6 +214,53 @@ def api_options():
     return jsonify({'flowers': FLOWER_WHITELIST, 'dynasties': DYNASTIES,
                     'months': MONTHS, 'reviewer': REVIEWER})
 
+
+
+@app.route('/api/delete_row', methods=['POST'])
+def api_delete_row():
+    """删除指定行（仅允许删除新建的空白行，或强制删除）"""
+    data  = request.json
+    idx   = int(data['idx'])
+    force = data.get('force', False)
+    with LOCK:
+        if idx < 0 or idx >= len(ROWS):
+            return jsonify({'ok': False, 'error': 'index out of range'}), 400
+        row = ROWS[idx]
+        # 安全检查：非强制模式下只允许删除正文和赏析都为空的行
+        if not force:
+            has_content = (row.get('正文','').strip() or row.get('赏析','').strip()
+                          or row.get('诗名','').strip())
+            if has_content:
+                return jsonify({'ok': False, 'error': 'row has content, use force=true'}), 400
+        ROWS.pop(idx)
+        save_csv()
+    return jsonify({'ok': True})
+
+@app.route('/api/add_row', methods=['POST'])
+def api_add_row():
+    """在指定行之后插入一条新空白行，继承月份和花名"""
+    data      = request.json
+    after_idx = int(data.get('after_idx', len(ROWS) - 1))
+    inherit   = data.get('inherit', {})
+    with LOCK:
+        try:
+            max_id = max(int(r.get('ID', 0)) for r in ROWS)
+        except Exception:
+            max_id = len(ROWS)
+        fieldnames = list(ROWS[0].keys()) if ROWS else [
+            'ID','月份','月份数字','花名','诗名','朝代','作者','正文','赏析','审核状态','审核备注','审核员']
+        new_row = {f: '' for f in fieldnames}
+        new_row['ID']       = str(max_id + 1)
+        new_row['月份']     = inherit.get('月份', '')
+        new_row['月份数字'] = str(MONTH_ORDER.get(inherit.get('月份',''), 0))
+        new_row['花名']     = inherit.get('花名', '')
+        new_row['朝代']     = inherit.get('朝代', '')
+        new_row['审核状态'] = ''
+        new_row['审核员']   = REVIEWER
+        ROWS.insert(after_idx + 1, new_row)
+        save_csv()
+    return jsonify({'ok': True, 'new_idx': after_idx + 1, 'new_id': new_row['ID']})
+
 @app.route('/')
 def index():
     return render_template_string(HTML)
@@ -229,15 +276,15 @@ HTML = r"""<!DOCTYPE html>
 :root{
   --ink:#1a1209;--paper:#faf6ef;--aged:#f0e8d8;--faded:#b8a888;
   --border:#ddd0b8;--accent:#8b3a2a;--green:#2d6a4f;--amber:#b5621e;
-  --blue:#2a5298;--serif:'Noto Serif SC',serif;--mono:'JetBrains Mono',monospace;
+  --serif:'Noto Serif SC',serif;--mono:'JetBrains Mono',monospace;
 }
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:var(--serif);background:var(--paper);color:var(--ink);display:flex;height:100vh;overflow:hidden;}
 
-/* sidebar */
+/* ── sidebar ── */
 #sidebar{width:190px;min-width:190px;background:var(--aged);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;}
 #sidebar-top{padding:16px 16px 10px;border-bottom:1px solid var(--border);}
-#sidebar-top h2{font-size:14px;font-weight:700;letter-spacing:.08em;}
+#sidebar-top h2{font-size:14px;font-weight:700;}
 #reviewer-badge{display:inline-block;margin-top:6px;padding:2px 10px;border-radius:12px;font-size:11px;font-family:var(--mono);background:var(--accent);color:#fff;}
 .month-item{border-bottom:1px solid var(--border);}
 .month-btn{padding:9px 14px 4px;cursor:pointer;font-family:var(--serif);font-size:13px;border:none;background:none;text-align:left;width:100%;color:var(--ink);display:flex;justify-content:space-between;align-items:center;transition:background .12s;}
@@ -248,21 +295,20 @@ body{font-family:var(--serif);background:var(--paper);color:var(--ink);display:f
 .mbar-wrap{height:2px;background:var(--border);margin:0 14px 6px;}
 .mbar{height:2px;background:var(--green);transition:width .3s;}
 .month-done .month-btn{color:var(--green);}
-.month-done .month-btn.active{color:#fff;}
 #sidebar-foot{margin-top:auto;padding:10px 14px;font-size:11px;color:var(--faded);border-top:1px solid var(--border);line-height:1.7;}
 .gbar-wrap{height:3px;background:var(--border);border-radius:2px;margin-top:5px;}
 .gbar{height:3px;background:var(--green);border-radius:2px;transition:width .3s;}
 
-/* main */
-#main{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+/* ── main ── */
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;}
 
-/* toolbar */
-#toolbar{padding:10px 18px;background:var(--aged);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
-#toolbar h1{font-size:15px;font-weight:700;margin-right:4px;}
-.flt-btn{padding:4px 12px;border:1px solid var(--border);border-radius:18px;background:none;cursor:pointer;font-family:var(--serif);font-size:12px;color:var(--ink);transition:all .12s;}
+/* ── toolbar ── */
+#toolbar{padding:8px 14px;background:var(--aged);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+#toolbar h1{font-size:14px;font-weight:700;}
+.flt-btn{padding:3px 11px;border:1px solid var(--border);border-radius:16px;background:none;cursor:pointer;font-family:var(--serif);font-size:12px;color:var(--ink);transition:all .12s;}
 .flt-btn:hover{background:var(--border);}
 .flt-btn.active{background:var(--ink);color:var(--paper);border-color:var(--ink);}
-.act-btn{padding:4px 12px;border-radius:18px;border:1px solid;cursor:pointer;font-family:var(--serif);font-size:12px;transition:all .12s;}
+.act-btn{padding:3px 11px;border-radius:16px;border:1px solid;cursor:pointer;font-family:var(--serif);font-size:12px;transition:all .12s;}
 #btn-sel-all{border-color:var(--faded);background:none;color:var(--ink);}
 #btn-sel-all:hover{background:var(--border);}
 #btn-approve{border-color:var(--green);background:none;color:var(--green);}
@@ -272,53 +318,100 @@ body{font-family:var(--serif);background:var(--paper);color:var(--ink);display:f
 #btn-clr{border-color:var(--faded);background:none;color:var(--faded);}
 #btn-clr:hover{background:var(--faded);color:#fff;}
 #sel-count{font-size:11px;font-family:var(--mono);color:var(--faded);margin-left:auto;}
-#search-box{padding:4px 10px;border:1px solid var(--border);border-radius:18px;font-family:var(--serif);font-size:12px;background:#fff;outline:none;width:140px;}
+#search-box{padding:3px 10px;border:1px solid var(--border);border-radius:16px;font-family:var(--serif);font-size:12px;background:#fff;outline:none;width:130px;}
 #search-box:focus{border-color:var(--accent);}
 
-/* table */
-#table-wrap{flex:1;overflow-y:auto;}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-thead th{position:sticky;top:0;background:var(--aged);border-bottom:2px solid var(--border);padding:9px 10px;text-align:left;font-weight:600;font-size:11px;letter-spacing:.07em;color:var(--faded);white-space:nowrap;z-index:10;}
+/* ── resizable table wrapper ── */
+#table-wrap{flex:1;overflow:auto;position:relative;}
+
+table{border-collapse:collapse;font-size:13px;table-layout:fixed;width:100%;}
+
+/* column resize handle */
+col{}
+thead th{
+  position:sticky;top:0;background:var(--aged);border-bottom:2px solid var(--border);
+  padding:8px 6px 8px 8px;text-align:left;font-weight:600;font-size:11px;
+  letter-spacing:.06em;color:var(--faded);white-space:nowrap;z-index:10;
+  overflow:hidden;user-select:none;
+}
+thead th .th-inner{display:flex;align-items:center;gap:2px;}
+thead th .resizer{
+  width:5px;min-width:5px;height:100%;cursor:col-resize;
+  position:absolute;right:0;top:0;bottom:0;
+  background:transparent;z-index:11;
+}
+thead th .resizer:hover,thead th .resizer.dragging{background:var(--accent);opacity:.4;}
+thead th{position:sticky;top:0;z-index:10;}
+
 tbody tr{border-bottom:1px solid var(--border);transition:background .08s;}
 tbody tr:hover{background:#f5ede0;}
 tbody tr.sel{background:#fde8d0;}
 tbody tr.approved{border-left:3px solid var(--green);}
 tbody tr.flagged{border-left:3px solid var(--amber);}
-td{padding:8px 10px;vertical-align:middle;}
-td.cb{width:32px;text-align:center;}
-td.st{width:48px;text-align:center;}
+tbody tr.new-row{background:#f0f8ff;}
+
+td{padding:6px 8px;vertical-align:top;overflow:hidden;}
+td.cb{width:32px;min-width:32px;text-align:center;vertical-align:middle;}
+td.st{width:44px;min-width:44px;text-align:center;vertical-align:middle;}
 .sbadge{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:12px;cursor:pointer;transition:transform .1s;}
 .sbadge:hover{transform:scale(1.2);}
 .sbadge.approved{background:#d4edda;}
 .sbadge.flagged{background:#fde8c8;}
 .sbadge.pending{background:var(--border);}
-td.id-cell{font-family:var(--mono);font-size:10px;color:var(--faded);width:40px;}
-.editable{cursor:pointer;border-radius:2px;padding:1px 3px;transition:background .1s;}
-.editable:hover{background:#eddfc8;}
-.inline-sel,.inline-inp{font-family:var(--serif);font-size:12px;background:#fff;border:1px solid var(--accent);border-radius:3px;padding:1px 4px;outline:none;}
-td.txt{max-width:220px;font-size:11px;line-height:1.5;color:#555;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;max-width:200px;}
-td.txt:hover{color:var(--accent);}
-td.note{font-size:11px;color:var(--faded);max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+td.id-cell{font-family:var(--mono);font-size:10px;color:var(--faded);vertical-align:middle;}
 
-/* drawer */
-#drawer{position:fixed;right:0;top:0;bottom:0;width:480px;background:var(--paper);border-left:1px solid var(--border);box-shadow:-6px 0 24px rgba(0,0,0,.1);transform:translateX(100%);transition:transform .22s ease;z-index:100;display:flex;flex-direction:column;}
+/* data cells */
+.dc{cursor:pointer;display:block;word-break:break-all;}
+.dc:hover{color:var(--accent);}
+/* short fields: single line */
+td.short-cell .dc{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* text/analysis: full multiline display */
+td.txt-cell{vertical-align:top;}
+td.txt-cell .dc{font-size:12px;line-height:1.7;color:#444;white-space:pre-wrap;word-break:break-all;}
+td.ana-cell{vertical-align:top;}
+td.ana-cell .dc{font-size:12px;line-height:1.7;color:#666;white-space:pre-wrap;word-break:break-all;}
+
+/* inline select */
+.inline-sel{font-family:var(--serif);font-size:12px;background:#fff;border:1px solid var(--accent);border-radius:3px;padding:1px 2px;outline:none;width:100%;}
+
+/* new row btn inside table */
+.add-row-btn,.del-row-btn{
+  display:none;
+  background:none;border:1px dashed var(--border);border-radius:3px;
+  font-size:11px;cursor:pointer;padding:1px 6px;
+  font-family:var(--serif);transition:all .12s;white-space:nowrap;
+}
+tbody tr:hover .add-row-btn,tbody tr:hover .del-row-btn{display:inline-block;}
+.add-row-btn{color:var(--faded);}
+.add-row-btn:hover{border-color:var(--accent);color:var(--accent);}
+.del-row-btn{color:#c0392b;border-color:#e8b4b4;margin-left:3px;}
+.del-row-btn:hover{background:#c0392b;color:#fff;border-color:#c0392b;}
+
+/* ── drawer ── */
+#drawer{
+  position:fixed;right:0;top:0;bottom:0;width:520px;
+  background:var(--paper);border-left:1px solid var(--border);
+  box-shadow:-6px 0 24px rgba(0,0,0,.1);
+  transform:translateX(100%);transition:transform .22s ease;
+  z-index:100;display:flex;flex-direction:column;
+}
 #drawer.open{transform:translateX(0);}
-#dh{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--aged);}
+#dh{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;background:var(--aged);}
 #dh h3{font-size:14px;font-weight:700;}
-#dh-meta{font-size:11px;color:var(--faded);font-family:var(--mono);}
-#d-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--faded);padding:0 2px;}
+#dh-meta{font-size:11px;color:var(--faded);font-family:var(--mono);margin-top:2px;}
+#d-close{background:none;border:none;font-size:18px;cursor:pointer;color:var(--faded);}
 #d-close:hover{color:var(--ink);}
-#db{flex:1;overflow-y:auto;padding:18px;}
-.fg{margin-bottom:16px;}
-.fl{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--faded);text-transform:uppercase;margin-bottom:5px;}
-.fv{font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-all;}
-textarea.de{width:100%;font-family:var(--serif);font-size:13px;line-height:1.8;border:1px solid var(--border);border-radius:4px;padding:7px 10px;background:#fff;resize:vertical;min-height:72px;outline:none;transition:border-color .12s;}
+#db{flex:1;overflow-y:auto;padding:16px;}
+.fg{margin-bottom:14px;}
+.fl{font-size:10px;font-weight:700;letter-spacing:.12em;color:var(--faded);text-transform:uppercase;margin-bottom:4px;}
+textarea.de{width:100%;font-family:var(--serif);font-size:13px;line-height:1.8;border:1px solid var(--border);border-radius:4px;padding:7px 10px;background:#fff;resize:vertical;outline:none;transition:border-color .12s;}
 textarea.de:focus{border-color:var(--accent);}
+textarea.de.tall{min-height:140px;}
+textarea.de.short{min-height:56px;}
 select.ds,input.di{font-family:var(--serif);font-size:13px;border:1px solid var(--border);border-radius:4px;padding:5px 9px;background:#fff;width:100%;outline:none;transition:border-color .12s;}
 select.ds:focus,input.di:focus{border-color:var(--accent);}
-.row2{display:flex;gap:12px;}
-.row2>.fg{flex:1;}
-#df{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--aged);}
+.row2{display:flex;gap:10px;}.row2>.fg{flex:1;}
+#df{padding:10px 16px;border-top:1px solid var(--border);display:flex;gap:8px;background:var(--aged);}
 .btn{flex:1;padding:7px 0;border-radius:4px;border:none;cursor:pointer;font-family:var(--serif);font-size:13px;font-weight:600;transition:opacity .12s;}
 .btn:hover{opacity:.82;}
 .btn-g{background:var(--green);color:#fff;}
@@ -326,15 +419,20 @@ select.ds:focus,input.di:focus{border-color:var(--accent);}
 .btn-k{background:var(--ink);color:#fff;}
 .btn-c{background:var(--border);color:var(--ink);flex:0 0 auto;padding:7px 14px;}
 
-/* shortcut hint */
-#shortcuts{position:fixed;bottom:16px;right:16px;background:rgba(26,18,9,.82);color:rgba(250,246,239,.7);font-size:10px;font-family:var(--mono);padding:8px 12px;border-radius:6px;line-height:1.8;pointer-events:none;z-index:50;}
+/* ── split helper in drawer ── */
+#split-hint{font-size:11px;color:var(--faded);margin-top:4px;line-height:1.5;}
 
-/* toast */
-#toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:var(--paper);padding:9px 18px;border-radius:6px;font-size:12px;transition:transform .25s;z-index:200;pointer-events:none;}
+/* ── shortcuts ── */
+#shortcuts{position:fixed;bottom:14px;right:14px;background:rgba(26,18,9,.8);color:rgba(250,246,239,.7);font-size:10px;font-family:var(--mono);padding:7px 11px;border-radius:6px;line-height:1.9;pointer-events:none;z-index:50;}
+
+/* ── toast ── */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(60px);background:var(--ink);color:var(--paper);padding:8px 18px;border-radius:6px;font-size:12px;transition:transform .25s;z-index:200;pointer-events:none;}
 #toast.show{transform:translateX(-50%) translateY(0);}
 </style>
 </head>
 <body>
+
+<!-- sidebar -->
 <div id="sidebar">
   <div id="sidebar-top">
     <h2>诗花雅送审核</h2>
@@ -344,10 +442,11 @@ select.ds:focus,input.di:focus{border-color:var(--accent);}
   <div id="sidebar-foot">
     <div id="gstat">载入中…</div>
     <div class="gbar-wrap"><div class="gbar" id="gbar"></div></div>
-    <div style="margin-top:8px;font-size:10px;opacity:.7">每次修改自动保存<br>文件: …_reviewed_?.csv</div>
+    <div style="margin-top:8px;font-size:10px;opacity:.7">自动保存<br>_reviewed_?.csv</div>
   </div>
 </div>
 
+<!-- main -->
 <div id="main">
   <div id="toolbar">
     <h1>数据审核</h1>
@@ -355,7 +454,7 @@ select.ds:focus,input.di:focus{border-color:var(--accent);}
     <button class="flt-btn" data-s="pending">待审</button>
     <button class="flt-btn" data-s="approved">已通过</button>
     <button class="flt-btn" data-s="flagged">已标记</button>
-    <span style="width:1px;height:18px;background:var(--border)"></span>
+    <span style="width:1px;height:16px;background:var(--border)"></span>
     <button class="act-btn" id="btn-sel-all">全选</button>
     <button class="act-btn" id="btn-approve">批量通过 ✓</button>
     <button class="act-btn" id="btn-flag">批量标记 ⚑</button>
@@ -365,25 +464,43 @@ select.ds:focus,input.di:focus{border-color:var(--accent);}
   </div>
 
   <div id="table-wrap">
-    <table>
-      <thead><tr>
-        <th class="cb"><input type="checkbox" id="chk-all"></th>
-        <th class="st">状态</th>
-        <th>ID</th>
-        <th>诗名</th>
-        <th>朝代</th>
-        <th>作者</th>
-        <th>花名</th>
-        <th>月份</th>
-        <th>正文预览</th>
-        <th>备注</th>
-      </tr></thead>
+    <table id="main-table">
+      <colgroup>
+        <col id="col-cb"     style="width:32px;min-width:32px">
+        <col id="col-st"     style="width:44px;min-width:44px">
+        <col id="col-id"     style="width:44px;min-width:44px">
+        <col id="col-title"  style="width:10%">
+        <col id="col-dyn"    style="width:6%">
+        <col id="col-auth"   style="width:6%">
+        <col id="col-flower" style="width:7%">
+        <col id="col-month"  style="width:5%">
+        <col id="col-text"   style="width:22%">
+        <col id="col-ana"    style="width:26%">
+        <col id="col-note"   style="width:8%">
+        <col id="col-acts"   style="width:72px;min-width:72px">
+      </colgroup>
+      <thead>
+        <tr>
+          <th class="cb"><input type="checkbox" id="chk-all"></th>
+          <th>状态<div class="resizer" data-col="col-st"></div></th>
+          <th>ID<div class="resizer" data-col="col-id"></div></th>
+          <th>诗名<div class="resizer" data-col="col-title"></div></th>
+          <th>朝代<div class="resizer" data-col="col-dyn"></div></th>
+          <th>作者<div class="resizer" data-col="col-auth"></div></th>
+          <th>花名<div class="resizer" data-col="col-flower"></div></th>
+          <th>月份<div class="resizer" data-col="col-month"></div></th>
+          <th>正文<div class="resizer" data-col="col-text"></div></th>
+          <th>赏析<div class="resizer" data-col="col-ana"></div></th>
+          <th>备注<div class="resizer" data-col="col-note"></div></th>
+          <th></th>
+        </tr>
+      </thead>
       <tbody id="tbody"></tbody>
     </table>
   </div>
 </div>
 
-<!-- 详情抽屉 -->
+<!-- drawer -->
 <div id="drawer">
   <div id="dh">
     <div>
@@ -401,7 +518,7 @@ select.ds:focus,input.di:focus{border-color:var(--accent);}
   </div>
 </div>
 
-<div id="shortcuts">A: 批量通过 &nbsp;F: 批量标记 &nbsp;Esc: 关闭</div>
+<div id="shortcuts">A: 批量通过 &nbsp;F: 批量标记 &nbsp;N: 新建行 &nbsp;Esc: 关闭</div>
 <div id="toast"></div>
 
 <script>
@@ -411,8 +528,34 @@ const MONTHS=['正月','二月','三月','四月','五月','六月','七月','�
 async function init(){
   opts=await fetch('/api/options').then(r=>r.json());
   document.getElementById('reviewer-badge').textContent='审核员 '+opts.reviewer;
+  initResizers();
   await refreshStats();
   selectMonth('正月');
+}
+
+/* ── 列宽拖拽 ───────────────────────────────────────────────────────────────── */
+function initResizers(){
+  document.querySelectorAll('.resizer').forEach(r=>{
+    let startX, startW, col;
+    r.addEventListener('mousedown', e=>{
+      e.preventDefault();
+      col=document.getElementById(r.dataset.col);
+      startX=e.clientX;
+      startW=col.offsetWidth||parseInt(col.style.width)||100;
+      r.classList.add('dragging');
+      const onMove=e2=>{
+        const w=Math.max(40, startW+(e2.clientX-startX));
+        col.style.width=w+'px';
+      };
+      const onUp=()=>{
+        r.classList.remove('dragging');
+        document.removeEventListener('mousemove',onMove);
+        document.removeEventListener('mouseup',onUp);
+      };
+      document.addEventListener('mousemove',onMove);
+      document.addEventListener('mouseup',onUp);
+    });
+  });
 }
 
 /* ── 月份侧栏 ── */
@@ -446,7 +589,7 @@ function selectMonth(m){
   loadRows();
 }
 
-/* ── 筛选 ── */
+/* ── 筛选 / 搜索 ── */
 document.querySelectorAll('.flt-btn').forEach(b=>{
   b.onclick=()=>{
     document.querySelectorAll('.flt-btn').forEach(x=>x.classList.remove('active'));
@@ -473,48 +616,57 @@ function renderTable(){
     const idx=row._idx;
     const st=row['审核状态']||'';
     const stCls=st==='✓'?'approved':st==='⚑'?'flagged':'pending';
-    const trCls=(selectedIdx.has(idx)?'sel ':'')+(st==='✓'?'approved':st==='⚑'?'flagged':'');
+    const isNew=!row['正文']&&!row['赏析']&&!row['诗名'];
+    const trCls=(selectedIdx.has(idx)?'sel ':'')+(st==='✓'?'approved':st==='⚑'?'flagged':'')+(isNew?' new-row':'');
     const tr=document.createElement('tr');
     tr.className=trCls; tr.dataset.idx=idx;
     tr.innerHTML=`
       <td class="cb"><input type="checkbox" class="rcb" data-idx="${idx}" ${selectedIdx.has(idx)?'checked':''}></td>
       <td class="st"><span class="sbadge ${stCls}" data-idx="${idx}">${st==='✓'?'✓':st==='⚑'?'⚑':'·'}</span></td>
       <td class="id-cell">${esc(row['ID']||'')}</td>
-      <td><span class="editable" data-idx="${idx}" data-f="诗名">${esc(row['诗名']||'')}</span></td>
-      <td>${mkSel(idx,'朝代',row['朝代'],opts.dynasties,'58px')}</td>
-      <td><span class="editable" data-idx="${idx}" data-f="作者">${esc(row['作者']||'')}</span></td>
-      <td>${mkSel(idx,'花名',row['花名'],opts.flowers,'82px')}</td>
-      <td>${mkSel(idx,'月份',row['月份'],opts.months,'62px')}</td>
-      <td class="txt" data-idx="${idx}">${esc((row['正文']||'').slice(0,40))}${(row['正文']||'').length>40?'…':''}</td>
-      <td class="note editable" data-idx="${idx}" data-f="审核备注">${esc(row['审核备注']||'')}</td>`;
+      <td>${mkCell(idx,'诗名',row['诗名'])}</td>
+      <td>${mkSelect(idx,'朝代',row['朝代'],opts.dynasties)}</td>
+      <td>${mkCell(idx,'作者',row['作者'])}</td>
+      <td>${mkSelect(idx,'花名',row['花名'],opts.flowers)}</td>
+      <td>${mkSelect(idx,'月份',row['月份'],opts.months)}</td>
+      <td class="txt-cell">${mkCell(idx,'正文',row['正文'],true)}</td>
+      <td class="ana-cell">${mkCell(idx,'赏析',row['赏析'],true)}</td>
+      <td class="short-cell">${mkCell(idx,'审核备注',row['审核备注'])}</td>
+      <td>
+        <button class="add-row-btn" data-idx="${idx}" title="在此行后新建一行">＋行</button>
+        <button class="del-row-btn" data-idx="${idx}" title="删除此行">✕</button>
+      </td>`;
     tb.appendChild(tr);
   });
   tb.querySelectorAll('.rcb').forEach(cb=>cb.onchange=()=>togSel(parseInt(cb.dataset.idx),cb.checked));
   tb.querySelectorAll('.sbadge').forEach(b=>b.onclick=e=>{e.stopPropagation();cycleStatus(parseInt(b.dataset.idx));});
-  tb.querySelectorAll('.editable').forEach(td=>{
-    td.ondblclick=()=>inlineEdit(td);
-    td.onclick=()=>openDrawer(parseInt(td.dataset.idx));
+  tb.querySelectorAll('.dc[data-idx]').forEach(dc=>{
+    dc.onclick=()=>openDrawer(parseInt(dc.dataset.idx));
   });
-  tb.querySelectorAll('.txt').forEach(td=>td.onclick=()=>openDrawer(parseInt(td.dataset.idx)));
+  tb.querySelectorAll('.add-row-btn').forEach(btn=>btn.onclick=e=>{
+    e.stopPropagation();
+    addRow(parseInt(btn.dataset.idx));
+  });
+  tb.querySelectorAll('.del-row-btn').forEach(btn=>btn.onclick=e=>{
+    e.stopPropagation();
+    deleteRow(parseInt(btn.dataset.idx));
+  });
 }
 
-function mkSel(idx,field,val,opts2,w){
-  return `<select class="inline-sel" style="width:${w}" data-idx="${idx}" data-f="${field}" onchange="saveF(this.dataset.idx,this.dataset.f,this.value)">
+function mkCell(idx, field, val, fullText=false){
+  const v=val||'';
+  if(fullText){
+    return `<span class="dc" data-idx="${idx}" data-f="${field}">${esc(v)}</span>`;
+  }
+  return `<span class="dc" data-idx="${idx}" data-f="${field}" title="${esc(v)}">${esc(v.slice(0,40))}${v.length>40?'…':''}</span>`;
+}
+function mkSelect(idx,field,val,opts2){
+  return `<select class="inline-sel" data-idx="${idx}" data-f="${field}" onchange="saveF(this.dataset.idx,this.dataset.f,this.value)">
     ${(opts2||[]).map(o=>`<option${o===val?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
 }
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-/* ── 行内编辑 ── */
-function inlineEdit(td){
-  const idx=parseInt(td.dataset.idx),field=td.dataset.f;
-  const cur=allRows.find(r=>r._idx===idx)?.[field]||'';
-  const inp=document.createElement('input');
-  inp.className='inline-inp'; inp.value=cur; inp.style.width='100%';
-  td.innerHTML=''; td.appendChild(inp); inp.focus();
-  inp.onblur=()=>{saveF(idx,field,inp.value);loadRows();};
-  inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();inp.blur();}if(e.key==='Escape')loadRows();};
-}
-
+/* ── 保存单字段 ── */
 async function saveF(idx,field,value){
   idx=parseInt(idx);
   await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -542,8 +694,11 @@ document.getElementById('chk-all').onchange=e=>{
 document.getElementById('btn-sel-all').onclick=()=>{
   allRows.forEach(r=>selectedIdx.add(r._idx)); renderTable(); updateSelCount();
 };
-function togSel(idx,on){on?selectedIdx.add(idx):selectedIdx.delete(idx);updateSelCount();
-  const tr=document.querySelector(`tr[data-idx="${idx}"]`);if(tr)tr.classList.toggle('sel',on);}
+function togSel(idx,on){
+  on?selectedIdx.add(idx):selectedIdx.delete(idx); updateSelCount();
+  const tr=document.querySelector(`tr[data-idx="${idx}"]`);
+  if(tr)tr.classList.toggle('sel',on);
+}
 function updateSelCount(){
   const n=selectedIdx.size;
   document.getElementById('sel-count').textContent=n?`已选 ${n} 条`:'';
@@ -560,20 +715,58 @@ document.getElementById('btn-approve').onclick=()=>batchSet('✓');
 document.getElementById('btn-flag').onclick=()=>batchSet('⚑');
 document.getElementById('btn-clr').onclick=()=>batchSet('');
 
-/* ── 抽屉 ── */
+/* ── 新建行 ── */
+async function addRow(afterIdx){
+  const row=allRows.find(r=>r._idx===afterIdx);
+  const inherit={
+    月份: row?row['月份']:'',
+    花名: row?row['花名']:'',
+    朝代: row?row['朝代']:'',
+  };
+  const res=await fetch('/api/add_row',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({after_idx:afterIdx, inherit})}).then(r=>r.json());
+  toast(`新建行 ID=${res.new_id}`);
+  await loadRows();
+  // 自动打开新行的抽屉
+  const newRow=allRows.find(r=>r._idx===res.new_idx);
+  if(newRow) openDrawer(res.new_idx);
+}
+
+/* ── 删除行 ── */
+async function deleteRow(idx){
+  const row=allRows.find(r=>r._idx===idx);
+  if(!row)return;
+  const hasContent=(row['正文']||'').trim()||(row['赏析']||'').trim()||(row['诗名']||'').trim();
+  if(hasContent){
+    if(!confirm(`确认删除「${row['诗名']||'此行'}」？\n此行有内容，删除后不可恢复。`))return;
+  }
+  const force=!!hasContent;
+  const res=await fetch('/api/delete_row',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({idx,force})}).then(r=>r.json());
+  if(res.ok){
+    toast(`已删除 ID=${row['ID']}`);
+    await loadRows(); refreshStats();
+  } else {
+    toast('删除失败: '+res.error);
+  }
+}
+
+/* ── 详情抽屉 ── */
 function openDrawer(idx){
   const row=allRows.find(r=>r._idx===idx);
   if(!row)return;
   drawerIdx=idx;
-  document.getElementById('d-title').textContent=row['诗名']||'详情';
-  document.getElementById('dh-meta').textContent=`ID ${row['ID']} · ${row['朝代']}·${row['作者']}`;
+  document.getElementById('d-title').textContent=row['诗名']||'（新建行）';
+  document.getElementById('dh-meta').textContent=`ID ${row['ID']} · ${row['朝代']||'—'}·${row['作者']||'—'}`;
   const db=document.getElementById('db');
   db.innerHTML=`
-    <div class="fg"><div class="fl">诗名</div><input class="di" id="di-title" value="${esc(row['诗名']||'')}"></div>
+    <div class="fg"><div class="fl">诗名</div>
+      <input class="di" id="di-title" value="${esc(row['诗名']||'')}"></div>
     <div class="row2">
       <div class="fg"><div class="fl">朝代</div>
         <select class="ds" id="di-dyn">${opts.dynasties.map(d=>`<option${d===row['朝代']?' selected':''}>${esc(d)}</option>`).join('')}</select></div>
-      <div class="fg"><div class="fl">作者</div><input class="di" id="di-auth" value="${esc(row['作者']||'')}"></div>
+      <div class="fg"><div class="fl">作者</div>
+        <input class="di" id="di-auth" value="${esc(row['作者']||'')}"></div>
     </div>
     <div class="row2">
       <div class="fg"><div class="fl">花名</div>
@@ -581,14 +774,23 @@ function openDrawer(idx){
       <div class="fg"><div class="fl">月份</div>
         <select class="ds" id="di-month">${opts.months.map(m=>`<option${m===row['月份']?' selected':''}>${esc(m)}</option>`).join('')}</select></div>
     </div>
-    <div class="fg"><div class="fl">正文</div><textarea class="de" id="di-text" rows="7">${esc(row['正文']||'')}</textarea></div>
-    <div class="fg"><div class="fl">赏析（可编辑）</div><textarea class="de" id="di-ana" rows="5">${esc(row['赏析']||'')}</textarea></div>
-    <div class="fg"><div class="fl">审核备注</div><textarea class="de" id="di-note" rows="2">${esc(row['审核备注']||'')}</textarea></div>
-    <div class="fg"><div class="fl">当前状态</div>
-      <div style="font-size:13px;color:var(--faded)">${row['审核状态']||'待审核'} &nbsp;审核员: ${row['审核员']||'—'}</div>
+    <div class="fg">
+      <div class="fl">正文</div>
+      <textarea class="de tall" id="di-text">${esc(row['正文']||'')}</textarea>
+    </div>
+    <div class="fg">
+      <div class="fl">赏析（完整内容 · 可编辑）</div>
+      <textarea class="de tall" id="di-ana">${esc(row['赏析']||'')}</textarea>
+      <div id="split-hint">💡 如赏析里混入了另一首诗的正文，可复制后关闭此窗口，点击该行「＋行」新建一行粘贴。</div>
+    </div>
+    <div class="fg"><div class="fl">审核备注</div>
+      <textarea class="de short" id="di-note">${esc(row['审核备注']||'')}</textarea></div>
+    <div class="fg" style="font-size:11px;color:var(--faded)">
+      状态: ${row['审核状态']||'待审'} &nbsp;·&nbsp; 审核员: ${row['审核员']||'—'}
     </div>`;
   document.getElementById('drawer').classList.add('open');
 }
+
 document.getElementById('d-close').onclick=closeDrawer;
 document.getElementById('d-cancel').onclick=closeDrawer;
 function closeDrawer(){document.getElementById('drawer').classList.remove('open');drawerIdx=null;}
@@ -598,26 +800,32 @@ document.getElementById('d-save').onclick=async()=>{
   const fields={'诗名':'di-title','朝代':'di-dyn','作者':'di-auth','花名':'di-flower',
                 '月份':'di-month','正文':'di-text','赏析':'di-ana','审核备注':'di-note'};
   for(const[f,id] of Object.entries(fields)){
-    await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({idx:drawerIdx,field:f,value:document.getElementById(id).value})});
+    const el=document.getElementById(id);
+    if(el) await fetch('/api/update',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({idx:drawerIdx,field:f,value:el.value})});
   }
-  toast('保存成功');closeDrawer();await loadRows();refreshStats();
+  toast('保存成功'); closeDrawer(); await loadRows(); refreshStats();
 };
 document.getElementById('d-ok').onclick=async()=>{
   if(drawerIdx===null)return;
-  await saveF(drawerIdx,'审核状态','✓');closeDrawer();await loadRows();
+  await saveF(drawerIdx,'审核状态','✓'); closeDrawer(); await loadRows();
 };
 document.getElementById('d-flag').onclick=async()=>{
   if(drawerIdx===null)return;
-  await saveF(drawerIdx,'审核状态','⚑');closeDrawer();await loadRows();
+  await saveF(drawerIdx,'审核状态','⚑'); closeDrawer(); await loadRows();
 };
 
-/* ── 快捷键 ── */
+/* ── 键盘 ── */
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='TEXTAREA'||e.target.tagName==='SELECT')return;
-  if(e.key==='Escape')closeDrawer();
-  if(e.key==='a'||e.key==='A')batchSet('✓');
-  if(e.key==='f'||e.key==='F')batchSet('⚑');
+  if(e.key==='Escape') closeDrawer();
+  if(e.key==='a'||e.key==='A') batchSet('✓');
+  if(e.key==='f'||e.key==='F') batchSet('⚑');
+  if(e.key==='n'||e.key==='N'){
+    // 新建行：在当前月份末尾
+    const last=allRows[allRows.length-1];
+    if(last) addRow(last._idx);
+  }
 });
 
 /* ── Toast ── */
@@ -633,8 +841,8 @@ init();
 # ── 入口 ──────────────────────────────────────────────────────────────────────
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='诗花雅送数据审核工具')
-    parser.add_argument('--csv',      default='poems_dataset_v2.csv')
-    parser.add_argument('--reviewer', default='A', help='审核员标识 (A/B/C)')
+    parser.add_argument('--csv',      default='poems_dataset_v4.csv')
+    parser.add_argument('--reviewer', default='A', help='审核员标识 (A/B/C/名字)')
     parser.add_argument('--port',     type=int, default=5000)
     parser.add_argument('--merge',    action='store_true', help='合并所有审核员结果')
     args = parser.parse_args()
@@ -653,5 +861,5 @@ if __name__ == '__main__':
     print(f'✅ 已加载 {len(ROWS)} 条')
     print(f'👤 审核员: {REVIEWER}')
     print(f'💾 保存至: {rpath}')
-    print(f'🌐 浏览器打开: http://localhost:{args.port}')
-    app.run(host='0.0.0.0', port=args.port, debug=False)
+    print(f'🌐 浏览器打开: http://127.0.0.1:{args.port}')
+    app.run(host='127.0.0.1', port=args.port, debug=False)
