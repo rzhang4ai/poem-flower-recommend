@@ -3,9 +3,9 @@
 Google Drive 协作版：每人负责不同月份，结果保存为独立文件，最后合并。
 
 运行方式：
-    python app.py --csv poems_dataset_v2.csv --reviewer A
-    python app.py --csv poems_dataset_v2.csv --reviewer B
-    python app.py --csv poems_dataset_v2.csv --reviewer C
+    python app.py --csv poems_dataset_v2.csv --ZHANG Rui
+    python app.py --csv poems_dataset_v2.csv --WANG Dongni
+    python app.py --csv poems_dataset_v2.csv --SHI Zhigang
 
 合并所有审核结果：
     python app.py --merge --csv poems_dataset_v2.csv
