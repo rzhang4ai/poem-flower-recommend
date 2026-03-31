@@ -1,0 +1,10 @@
+======================================================================
+SikuRoBERTa vs BERT-CCPoem 情感推断并排对比汇总
+======================================================================
+样本数: 1075
+5类标签一致率: 0.6009
+3类极性一致率: 0.7098
+平均置信度差值(ccpoem-siku): 0.1047
+
+并排对比文件: /Users/rzhang/Documents/poem-flower-recommend/02.sample_label_phase2/step2e_sentiment/output/results/siku_vs_ccpoem_sentiment_compare.csv
+说明: 对比表已包含“正文”与“赏析”列，便于人工直观判断。

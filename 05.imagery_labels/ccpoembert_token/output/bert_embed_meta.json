@@ -1,0 +1,11 @@
+{
+  "poem_model": "/Users/rzhang/Documents/poem-flower-recommend/models/bert_ccpoem",
+  "poem_model_path": "/Users/rzhang/Documents/poem-flower-recommend/models/bert_ccpoem",
+  "poem_hidden_size": 512,
+  "ana_model": "/Users/rzhang/Documents/poem-flower-recommend/models/sikuroberta",
+  "ana_model_path": "/Users/rzhang/Documents/poem-flower-recommend/models/sikuroberta",
+  "ana_hidden_size": 768,
+  "n_poems": 200,
+  "device": "cpu",
+  "elapsed_seconds": 29.2
+}

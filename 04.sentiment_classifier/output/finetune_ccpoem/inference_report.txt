@@ -1,0 +1,24 @@
+============================================================
+BERT-CCPoem 推断报告（1075 首项目诗词）
+============================================================
+模型路径：/Users/rzhang/Documents/poem-flower-recommend/models/ccpoem_sentiment_ft/checkpoints/checkpoint-1000
+推断诗词数：1075
+
+5 类标签分布：
+  隐性正面    :  447首   41.6%
+  隐性负面    :  326首   30.3%
+  中性      :  175首   16.3%
+  正面      :  105首    9.8%
+  负面      :   22首    2.0%
+
+3 类极性分布：
+  positive    :  552首   51.3%
+  negative    :  348首   32.4%
+  neutral     :  175首   16.3%
+
+平均置信度：0.5944
+
+说明：
+  - ccpoem_label/ccpoem_label_zh: 5 类预测标签
+  - ccpoem_polarity: 3 类极性映射
+  - ccpoem_prob_0..4: 每类 softmax 概率，可用于后续融合

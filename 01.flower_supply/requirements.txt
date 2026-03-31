@@ -1,0 +1,4 @@
+# flower_supply 爬虫依赖
+playwright>=1.40.0
+
+# 安装后需执行: playwright install chromium

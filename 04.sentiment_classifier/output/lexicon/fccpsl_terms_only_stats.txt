@@ -1,0 +1,35 @@
+======================================================================
+FCCPSL 词汇与分类标签导出统计
+======================================================================
+来源文件: /Users/rzhang/Documents/poem-flower-recommend/02.sample_label_phase2/step2e_sentiment/output/lexicon/FCCPSL.owl
+总词数(C4): 14368
+单字词: 807
+多字词: 13561
+
+C1 分布:
+  negative     6488
+  positive     7880
+
+C2 分布:
+  disgust      4471
+  favour       6644
+  pleasure     1140
+  sadness      2017
+  surprise       96
+
+C3 分布:
+  anger           152
+  criticize      3665
+  ease            305
+  faith           251
+  fear            494
+  guilt            83
+  joy             835
+  like            658
+  misgive          80
+  miss            127
+  peculiar         96
+  praise         5582
+  sorrow         1313
+  vexed           574
+  wish            153

@@ -1,0 +1,7 @@
+[1] 目录解析: 1034 条 → digi_sxhy_catalog_table.csv
+[2] 合并词典正文 → literature review/digi-sxhy/merged_simp_full.txt
+[3] 标题词条 944，子词映射 34261，匹配词典 34974
+[4] 诗歌 1075 首 → digi_sxhy_imagery_per_poem.csv
+[5] 意象频次表 → digi_sxhy_imagery_frequency.csv (738 条)
+
+完成。

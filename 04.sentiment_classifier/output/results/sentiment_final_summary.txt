@@ -1,0 +1,43 @@
+============================================================
+  情感分类结果分布汇总
+============================================================
+
+  [L1] 5极性分布:
+    Implicit Positive      (隐性积极)   393 (36.6%)
+    Implicit Negative      (隐性消极)   344 (32.0%)
+    Neutral                (中性)   176 (16.4%)
+    Positive               (积极)   114 (10.6%)
+    Negative               (消极)    48 (4.5%)
+
+  [L2] C2粗粒度分布:
+    positive         (积极)   507 (47.2%)
+    neg_anger        (负向-愤懑)   215 (20.0%)
+    neg_sorrow       (负向-悲伤)   177 (16.5%)
+    n/a              (n/a)   176 (16.4%)
+
+  [L3] C3细粒度分布:
+    praise           (称颂赞美)   349 (32.5%)
+    n/a              (n/a)   176 (16.4%)
+    sorrow           (悲伤哀痛)   148 (13.8%)
+    criticize        (批判指责)   115 (10.7%)
+    vexed            (烦恼苦闷)    87 (8.1%)
+    like             (喜爱欣赏)    77 (7.2%)
+    joy              (欢乐喜悦)    42 (3.9%)
+    miss             (思念怀念)    29 (2.7%)
+    faith            (坚定信念)    22 (2.0%)
+    ease             (平和安适)    17 (1.6%)
+    misgive          (忧虑疑惑)    13 (1.2%)
+
+  [L2×L3] 粗细粒度交叉（Top 15）:
+    positive       → praise           349
+    neg_sorrow     → sorrow           148
+    neg_anger      → criticize        115
+    neg_anger      → vexed             87
+    positive       → like              77
+    positive       → joy               42
+    neg_sorrow     → miss              29
+    positive       → faith             22
+    positive       → ease              17
+    neg_anger      → misgive           13
+
+============================================================

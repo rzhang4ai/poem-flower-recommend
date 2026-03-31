@@ -1,0 +1,64 @@
+﻿花名,月份数字,count,l1_polarity
+兰花,3,16,Implicit Positive
+凤仙花,6,3,Implicit Positive
+合欢,4,6,Implicit Negative
+向日葵,7,3,Implicit Negative
+含笑,4,4,Implicit Positive
+山茶花,10,12,Implicit Positive
+月季,2,9,Implicit Positive
+木兰,2,3,Implicit Positive
+木棉花,3,3,Implicit Negative
+木槿,7,10,Implicit Positive
+木芙蓉,6,28,Implicit Positive
+木芙蓉,10,19,Implicit Negative
+李花,2,5,Implicit Negative
+杏花,2,35,Implicit Negative
+杜鹃,4,16,Implicit Negative
+杨花,3,39,Implicit Negative
+栀子花,5,3,Implicit Positive
+桂花,8,26,Positive
+桃花,2,45,Implicit Negative
+梅花,1,161,Implicit Negative
+梨花,2,20,Implicit Negative
+棠梨花,2,3,Implicit Negative
+榴花,5,14,Implicit Positive
+樱桃花,1,17,Implicit Negative
+水仙花,12,23,Implicit Negative
+海棠,2,50,Implicit Positive
+牡丹,3,53,Implicit Positive
+牵牛花,7,5,Positive
+玉兰,2,5,Implicit Positive
+玉簪花,6,12,Implicit Positive
+玉蕊花,4,3,Implicit Positive
+琼花,3,12,Implicit Negative
+瑞香,12,5,Implicit Positive
+石竹,5,4,Implicit Positive
+秋海棠,7,6,Implicit Positive
+秋葵,8,7,Implicit Positive
+素馨,2,4,Implicit Negative
+紫薇,7,3,Implicit Positive
+红梅,11,21,Implicit Positive
+芍药,4,16,Implicit Positive
+芦花,7,4,Implicit Negative
+茉莉,6,13,Implicit Positive
+荷花,6,34,Implicit Negative
+莲花,6,17,Implicit Positive
+菊花,6,30,Implicit Positive
+菊花,8,11,Implicit Negative
+菊花,9,68,Implicit Positive
+菜花,2,4,Implicit Positive
+萱草,6,7,Implicit Negative
+蓼花,7,10,Implicit Negative
+蔷薇,3,19,Implicit Positive
+虞美人,4,10,Negative
+虞美人,6,11,Implicit Negative
+蜡梅,12,11,Implicit Positive
+辛夷,4,6,Implicit Negative
+迎春花,1,5,Implicit Positive
+郁李花,3,4,Implicit Positive
+酴醿,3,26,Implicit Positive
+野菊,10,9,Implicit Negative
+金沙,3,4,Implicit Positive
+金钱花,8,3,Neutral
+雁来红,9,3,Implicit Negative
+鸡冠花,7,4,Implicit Positive

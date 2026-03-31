@@ -1,0 +1,43 @@
+============================================================
+  FCCPSL + NTUSD 合并词典统计说明
+============================================================
+FCCPSL 原始文件：/Users/rzhang/Documents/poem-flower-recommend/02.sample_label_phase2/step2e_sentiment/output/lexicon/FCCPSL.owl
+FCCPSL 版本：poetry sentiment ontology (2021)
+论文：Zhang et al., Neural Computing and Applications 2022
+
+词典总量：
+  FCCPSL C4 术语：14,368
+  NTUSD 补充：27
+  合并后总词数：14,395
+
+C1 极性分布：
+  positive  : 7,880 词
+  negative  : 6,488 词
+
+C2 情感族分布：
+  favour      : 6,644 词
+  disgust     : 4,471 词
+  sadness     : 2,017 词
+  pleasure    : 1,140 词
+  surprise    : 96 词
+
+C3 情感类分布（15类）：
+  praise      （称颂赞美）: 5,582 词
+  criticize   （批判指责）: 3,665 词
+  sorrow      （悲伤哀痛）: 1,313 词
+  joy         （欢乐喜悦）: 835 词
+  like        （喜爱欣赏）: 658 词
+  vexed       （烦恼苦闷）: 574 词
+  fear        （恐惧忧惧）: 494 词
+  ease        （平和安适）: 305 词
+  faith       （坚定信念）: 251 词
+  wish        （渴望期盼）: 153 词
+  anger       （愤怒不平）: 152 词
+  miss        （思念怀念）: 127 词
+  peculiar    （惊奇感叹）: 96 词
+  guilt       （愧疚自责）: 83 词
+  misgive     （忧虑疑惑）: 80 词
+
+多字词 vs 单字词：
+  单字词：833
+  多字词：13562

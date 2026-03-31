@@ -1,0 +1,92 @@
+==============================================================
+  Step 1 伪标签生成 + 逻辑对撞  漏斗报告
+==============================================================
+
+【参数配置】
+  MIN_WORD_LEN      = 2
+  MIN_TOP_SCORE     = 0.001
+  USE_IDF_WEIGHT    = True
+  SINGLE_CHAR_WHITE = ['乐', '哀', '喜', '忆', '念', '思', '怨', '悦', '悲', '愁', '欢', '泪', '痛', '苦']
+
+【词典覆盖（过滤后）】
+  anger       (愤怒不平  )    98词  IDF权重=0.1508
+  criticize   (批判指责  )  2441词  IDF权重=0.0889
+  ease        (平和安适  )   194词  IDF权重=0.1315
+  faith       (坚定信念  )   179词  IDF权重=0.1335
+  fear        (恐惧忧惧  )   347词  IDF权重=0.1184
+  guilt       (愧疚自责  )    52词  IDF权重=0.1746
+  joy         (欢乐喜悦  )   546词  IDF权重=0.1099
+  like        (喜爱欣赏  )   448词  IDF权重=0.1135
+  misgive     (忧虑疑惑  )    54词  IDF权重=0.1730
+  miss        (思念怀念  )    85词  IDF权重=0.1556
+  peculiar    (惊奇感叹  )    57词  IDF权重=0.1707
+  praise      (称颂赞美  )  3639词  IDF权重=0.0845
+  sorrow      (悲伤哀痛  )   791词  IDF权重=0.1038
+  vexed       (烦恼苦闷  )   396词  IDF权重=0.1158
+  wish        (渴望期盼  )   130词  IDF权重=0.1422
+
+【样本漏斗】
+  原始 FSPC 样本              :  5000
+  去掉 Uncertain (无匹配/并列)  :  4054  (946 丢弃)
+  逻辑对撞冲突丢弃             :  2158  (2158 条)
+  最终黄金集                   :  1896  (37.9%)
+
+【伪标签分布（全量匹配结果）】
+  Uncertain   (      ):   946
+  praise      (称颂赞美  ):   926
+  joy         (欢乐喜悦  ):   664
+  sorrow      (悲伤哀痛  ):   572
+  criticize   (批判指责  ):   499
+  vexed       (烦恼苦闷  ):   399
+  like        (喜爱欣赏  ):   261
+  ease        (平和安适  ):   177
+  faith       (坚定信念  ):   124
+  fear        (恐惧忧惧  ):   122
+  misgive     (忧虑疑惑  ):   119
+  miss        (思念怀念  ):    65
+  guilt       (愧疚自责  ):    60
+  wish        (渴望期盼  ):    42
+  peculiar    (惊奇感叹  ):    13
+  anger       (愤怒不平  ):    11
+
+【黄金集标签分布】
+  praise      (称颂赞美  ):   437  (23.0%)
+  sorrow      (悲伤哀痛  ):   369  (19.5%)
+  vexed       (烦恼苦闷  ):   277  (14.6%)
+  criticize   (批判指责  ):   207  (10.9%)
+  like        (喜爱欣赏  ):   148  (7.8%)
+  joy         (欢乐喜悦  ):   130  (6.9%)
+  faith       (坚定信念  ):    81  (4.3%)
+  misgive     (忧虑疑惑  ):    76  (4.0%)
+  ease        (平和安适  ):    74  (3.9%)
+  miss        (思念怀念  ):    41  (2.2%)
+  guilt       (愧疚自责  ):    20  (1.1%)
+  wish        (渴望期盼  ):    17  (0.9%)
+  anger       (愤怒不平  ):     8  (0.4%)
+  peculiar    (惊奇感叹  ):     6  (0.3%)
+  fear        (恐惧忧惧  ):     5  (0.3%)
+
+【黄金集极性分布（来自 FSPC 原始标注）】
+  Implicit Negative     :   744  (39.2%)
+  Implicit Positive     :   587  (31.0%)
+  Positive              :   261  (13.8%)
+  Negative              :   201  (10.6%)
+  Neutral               :   103  (5.4%)
+
+【冲突样本 Top 案例（最大10条）】
+  伪标签           FSPC极性                  诗歌（前20字）
+  like          Neutral                 堂前慈竹翠婆娑堂上慈亲鬓已皤歴尽氷霜当雨
+  criticize     Neutral                 眼暗没功夫慵来剪刻粗自看花样古称得少年无
+  joy           Implicit Positive       阴遥俄喜日华落静久更宜山鸟鸣荣谢易为花厚
+  praise        Implicit Negative       独在异乡为异客每逢佳节倍思亲遥知兄弟登高
+  joy           Negative                起来不喜匀红粉强把菱花照病容腰瘦故知闲事
+  criticize     Neutral                 归近溪桥东复东蓼花迎路舞西风草深一鸟忽飞
+  joy           Implicit Positive       画檐鸣雨早秋天不喜新凉喜有年眼里香秔三万
+  criticize     Implicit Positive       自是寻春去校迟不须惆怅怨芳时狂风落尽深红
+  vexed         Implicit Positive       芙蓉照水弄娇斜白白红红各一家近日司花出新
+  joy           Implicit Positive       伯仲怡然意甚真齐肩握手笑相亲云阴解駮排空
+
+【输出文件】
+  黄金集 CSV : /Users/rzhang/Documents/poem-flower-recommend/02.sample_label_phase2/step2e_sentiment/output/pseudo_label/golden_dataset_step1.csv
+  本报告     : /Users/rzhang/Documents/poem-flower-recommend/02.sample_label_phase2/step2e_sentiment/output/pseudo_label/step1_funnel_report.txt
+==============================================================

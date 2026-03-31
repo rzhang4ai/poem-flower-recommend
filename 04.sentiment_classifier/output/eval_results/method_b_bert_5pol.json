@@ -1,0 +1,83 @@
+{
+  "method": "Fine-tuned BERT-CCPoem (approx, not blind test)",
+  "test_size": 1000,
+  "accuracy": 0.687,
+  "macro_f1": 0.6596701139530319,
+  "weighted_f1": 0.6859328926398113,
+  "per_class": {
+    "Negative": {
+      "precision": 0.6125,
+      "recall": 0.8448275862068966,
+      "f1": 0.7101449275362319,
+      "support": 58.0
+    },
+    "Implicit Negative": {
+      "precision": 0.776595744680851,
+      "recall": 0.7474402730375427,
+      "f1": 0.7617391304347826,
+      "support": 293.0
+    },
+    "Neutral": {
+      "precision": 0.6276595744680851,
+      "recall": 0.6654135338345865,
+      "f1": 0.6459854014598541,
+      "support": 266.0
+    },
+    "Implicit Positive": {
+      "precision": 0.7009966777408638,
+      "recall": 0.6762820512820513,
+      "f1": 0.6884176182707994,
+      "support": 312.0
+    },
+    "Positive": {
+      "precision": 0.5636363636363636,
+      "recall": 0.43661971830985913,
+      "f1": 0.49206349206349204,
+      "support": 71.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      49,
+      7,
+      1,
+      1,
+      0
+    ],
+    [
+      24,
+      219,
+      38,
+      11,
+      1
+    ],
+    [
+      6,
+      40,
+      177,
+      42,
+      1
+    ],
+    [
+      0,
+      16,
+      63,
+      211,
+      22
+    ],
+    [
+      1,
+      0,
+      3,
+      36,
+      31
+    ]
+  ],
+  "label_order": [
+    "Negative",
+    "Implicit Negative",
+    "Neutral",
+    "Implicit Positive",
+    "Positive"
+  ]
+}

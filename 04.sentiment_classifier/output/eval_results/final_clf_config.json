@@ -1,0 +1,57 @@
+{
+  "version": "1.0",
+  "layer1_5pol": {
+    "method": "svm",
+    "model": "svm_5pol.pkl",
+    "chosen_method": "bert_finetune",
+    "macro_f1": 0.6597,
+    "svm_base_f1": 0.3579,
+    "svm_ft_f1": 0.5659,
+    "bert_ft_f1": 0.6597,
+    "note": "bert_ft 使用全量FSPC训练，存在数据泄露，报告F1偏高"
+  },
+  "layer2_c2": {
+    "enabled": true,
+    "scheme": "C_合并正向_3类",
+    "model": "svm_c2_ablation_best.pkl",
+    "keep_classes": [
+      "neg_anger",
+      "neg_sorrow",
+      "positive"
+    ],
+    "macro_f1_test": 0.5698749955926938,
+    "threshold_used": 0.5,
+    "ablation_best_feat": "F4_FT+Lex",
+    "ablation_macro_f1": 0.9345485068827082
+  },
+  "layer3_c3": {
+    "enabled": true,
+    "model": "svm_c3_ablation_best.pkl",
+    "keep_classes": [
+      "criticize",
+      "ease",
+      "faith",
+      "joy",
+      "like",
+      "misgive",
+      "miss",
+      "praise",
+      "sorrow",
+      "vexed"
+    ],
+    "macro_f1_test": 0.22828460352568083,
+    "ablation_best_feat": "F4_FT+Lex",
+    "ablation_macro_f1": 0.8963416142482084
+  },
+  "polarity_constraint": {
+    "positive_c2": [
+      "favour",
+      "pleasure",
+      "surprise"
+    ],
+    "negative_c2": [
+      "sadness",
+      "disgust"
+    ]
+  }
+}

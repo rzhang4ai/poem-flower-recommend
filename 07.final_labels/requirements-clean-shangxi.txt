@@ -1,0 +1,4 @@
+# 仅用于 clean_shangxi.py（Gemini 赏析清洗）
+# 须用 google-genai，以便 thinking_budget=0，避免思考型模型抢光输出配额导致截断
+pandas>=2.0.0
+google-genai>=1.0.0

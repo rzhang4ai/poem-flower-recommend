@@ -1,0 +1,42 @@
+============================================================
+  FSPC 数据集切分
+============================================================
+  总量:  5000
+  train: 4000
+  test:  1000
+
+  极性分布（train / test）：
+  极性                      train   test
+  Negative                  231     58
+  Implicit Negative        1173    293
+  Neutral                  1062    266
+  Implicit Positive        1250    312
+  Positive                  284     71
+
+============================================================
+  Golden 数据集切分
+============================================================
+  总量:  1896
+  train: 1516
+  test:  380
+
+  C3 标签分布（train / test）：
+  C3标签            train   test
+  praise            349     88
+  sorrow            295     74
+  vexed             221     56
+  criticize         166     41
+  like              118     30
+  joy               104     26
+  faith              65     16
+  misgive            61     15
+  ease               59     15
+  miss               33      8
+  guilt              16      4
+  wish               14      3
+  anger               6      2
+  peculiar            5      1
+  fear                4      1
+
+⚠ 注意：微调BERT 在全量 FSPC 训练，fspc_test 对它不是真正盲测。
+  SVM vs 微调BERT 的比较为'近似比较'，结论仅供方向性参考。

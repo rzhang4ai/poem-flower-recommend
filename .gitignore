@@ -14,6 +14,10 @@ flower_supply/.deps/
 flower_supply/data/
 flower_supply/images/
 flower_supply/match_v1/
+01.flower_supply/.deps/
+01.flower_supply/data/
+01.flower_supply/images/
+01.flower_supply/match_v1/
 
 # 系统文件
 .DS_Store
