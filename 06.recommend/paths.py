@@ -1,7 +1,7 @@
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DATA_CSV = ROOT / "03.final_labels/poems_structured_shangxi_wip.csv"
+DATA_CSV = ROOT / "07.final_labels/poems_structured_shangxi_wip.csv"
 HERE = Path(__file__).resolve().parent
 OUTPUT_DIR = HERE / "output"
 LEXICON_JSON = HERE / "emotion_lexicon.json"
