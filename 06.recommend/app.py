@@ -48,7 +48,7 @@ POLARITY_VECS: dict[str, list[float]] = {
     "negative":          [0.75, 0.15, 0.05, 0.03, 0.02],
 }
 _ICON_DIR = HERE / "assets" / "emotions"
-_WC_DIR   = HERE.parent / "04.visualization" / "output" / "wordcloud"
+_WC_DIR   = HERE.parent / "08.visualization" / "output" / "wordcloud"
 
 # 送人场景 → scene_key
 GIFT_SCENES: set[str] = {"送别友人", "表达敬意", "爱情思念", "节日庆贺"}
