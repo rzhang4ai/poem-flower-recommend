@@ -3,7 +3,7 @@
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://poem-flower-recommend.streamlit.app)
 
-> 输入心情或场合，系统从 1,075 首古典咏花诗词中为你推荐最贴切的一首。  
+> 输入心情或场合，系统从 1,075 首古典咏花诗词中为你推荐最贴切的三首。 
 > Describe your mood or occasion — the system recommends the most fitting flower poem from a corpus of 1,075 classical Chinese poems.
 
 **[🌺 Live Demo](https://poem-flower-recommend.streamlit.app)**
@@ -12,7 +12,7 @@
 
 ## 项目简介 / Overview
 
-本系统以《中国历代咏花诗词鉴赏辞典》为核心语料，结合《诗学含英》意象词典，构建了一个多维度古诗推荐框架。系统融合了规则、统计与语言模型方法，对每首诗进行情感分类与意象标注，最终通过多通道匹配与 RRF 融合排序呈现推荐结果。
+本系统是香港理工大学COMP5572 AI Applications in the Humanities 课程项目，开发者包括ZHANG Rui，WANG Dongni，Shi Zhigang，以《中国历代咏花诗词鉴赏辞典》为核心语料，结合《诗学含英》意象词典，构建了一个多维度古诗推荐框架。系统融合了规则、统计与语言模型方法，对每首诗进行情感分类与意象标注，最终通过多通道匹配与 RRF 融合排序呈现推荐结果。
 
 This system uses the *Encyclopaedia of Chinese Flower Poetry through the Ages* as its core corpus, combined with imagery from the classical lexicon *Shixue Hanying*. It builds a multi-dimensional poem recommendation framework by integrating rule-based, statistical, and language-model approaches — performing sentiment classification and imagery annotation on each poem, then ranking results via multi-channel matching and Reciprocal Rank Fusion (RRF).
 
@@ -95,10 +95,7 @@ git clone https://github.com/rzhang4ai/poem-flower-recommend.git
 cd poem-flower-recommend
 pip install -r requirements.txt
 
-# 配置 Gemini API Key（可在 Google AI Studio 免费获取）
-cp 06.recommend/.env.example 06.recommend/.env
-# 编辑 .env，填入 GOOGLE_API_KEY
-
+# 配置 Gemini或者其他 API Key
 streamlit run 05.recommend/app.py
 ```
 
@@ -116,8 +113,8 @@ Full terms in [DATA_POLICY.md](DATA_POLICY.md).
 
 ## 致谢 / Acknowledgements
 
-- **CCPoemBERT / SIKU-BERT**：情感分类模型基础，感谢 [SIKU-BERT 项目](https://huggingface.co/SIKU-BERT)。  
-  Sentiment model base — thanks to the [SIKU-BERT project](https://huggingface.co/SIKU-BERT).
+- **CCPoemBERT**：Tsinghua NLP Lab (THUNLP). BERT-CCPoem: Pre-trained Model for Classical Chinese
+Poetry. GitHub Repository. URL: https://github.com/THUNLP-AIPoet/BERT-CCPoem
 - **《中国历代咏花诗词鉴赏辞典》**：核心诗词语料来源。
 - **《诗学含英》（清·李渔辑）**：意象词典来源，本项目完成了其数字化与结构化整理。  
   Imagery lexicon source — this project digitized and structured the text.
